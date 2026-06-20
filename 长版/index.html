@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>校园地质文化园 · 科普导览</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1a2e1f;--ink-rgb:26,46,31;
+    --paper:#f5f1e8;--paper-rgb:245,241,232;
+    --paper-tint:#ece7da;--ink-tint:#253d2c;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased}
+
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0} canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1} body.light-bg canvas#bg-dark{opacity:0}
+  body.low-power canvas.bg{display:none!important}
+
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)} .slide.dark{color:var(--paper);background:var(--ink)}
+
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.7}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;opacity:.55}
+
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .h-hero{font-family:var(--serif-zh);font-weight:900;font-size:10vw;line-height:.96;letter-spacing:-.02em}
+  .h-xl{font-family:var(--serif-zh);font-weight:700;font-size:6.2vw;line-height:1.08;letter-spacing:-.01em}
+  .h-sub{font-family:var(--serif-zh);font-weight:500;font-size:3.1vw;line-height:1.25;opacity:.7}
+  .h-md{font-family:var(--serif-zh);font-weight:600;font-size:2.3vw;line-height:1.3}
+  .h2-zh{font-family:var(--serif-zh);font-weight:600;font-size:3.2vw;line-height:1.2}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(15px,1.22vw);line-height:1.75;opacity:.82;letter-spacing:.01em}
+  .body-serif{font-family:var(--serif-zh);font-weight:400;font-size:max(15px,1.3vw);line-height:1.65;opacity:.88}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.75vw;line-height:1.5;opacity:.86}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute}
+
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:stretch}
+  .fill{flex:1} .center{align-items:center;justify-content:center;text-align:center}
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);box-sizing:border-box;width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04)}
+  .frame-img>img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain>img{object-fit:contain;object-position:center center}
+  .frame-img.r-16x9{aspect-ratio:16/9;max-height:64vh}
+  .frame-img.r-4x3{aspect-ratio:4/3;max-height:56vh}
+  .frame-img.r-3x2{aspect-ratio:3/2;max-height:46vh}
+  .frame-img.r-3x4{aspect-ratio:3/4;max-height:60vh}
+  .frame-cap{display:flex;justify-content:space-between;align-items:baseline;gap:1vw;margin-top:.8vh;font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;opacity:.72}
+  .frame-cap .pf{font-family:var(--serif-zh);font-weight:600;font-size:max(13px,1vw);letter-spacing:.04em;text-transform:none;opacity:.94}
+  figure.tile{display:flex;flex-direction:column;margin:0;min-width:0}
+  figure.tile>.frame-img{flex:0 0 auto}
+
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+  body.low-power #hint{opacity:.72;color:var(--paper);mix-blend-mode:normal}
+  body.light-bg.low-power #hint{color:var(--ink)}
+
+  #auto-bar{position:fixed;top:2vh;right:3vw;z-index:30;display:flex;gap:8px;align-items:center;font-family:var(--mono);font-size:11px;opacity:0;transition:opacity .3s}
+  body:hover #auto-bar{opacity:.6} #auto-bar:hover{opacity:1}
+  #auto-bar button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:var(--paper);padding:4px 12px;border-radius:999px;cursor:pointer;font-family:var(--mono);font-size:10px;letter-spacing:.15em;transition:all .2s}
+  #auto-bar button:hover{background:rgba(255,255,255,.3)}
+  #auto-bar button.active{background:rgba(255,255,255,.5);border-color:rgba(255,255,255,.7)}
+  body.light-bg #auto-bar button{color:var(--ink);border-color:rgba(0,0,0,.3)}
+  body.light-bg #auto-bar button.active{background:rgba(0,0,0,.2)}
+
+  [data-anim]{opacity:1} body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.low-power #deck{transition:none!important}
+  body.low-power *,body.low-power *::before,body.low-power *::after{animation:none!important;transition:none!important}
+  body.low-power.motion-ready [data-anim],body.low-power [data-anim]{opacity:1!important;transform:none!important}
+</style>
+</head>
+<body>
+<script>
+(function(){
+  const KEY='guizang-ppt-low-power';
+  const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  const stored=localStorage.getItem(KEY);
+  window.__lowPowerMode=stored==='1'||(stored===null&&reduced);
+  window.__setLowPowerMode=function(on,opts={}){
+    window.__lowPowerMode=!!on;
+    document.body.classList.toggle('low-power',window.__lowPowerMode);
+    if(opts.persist!==false)localStorage.setItem(KEY,window.__lowPowerMode?'1':'0');
+    if(window.__lowPowerMode&&document.getAnimations)document.getAnimations().forEach(a=>a.cancel());
+    if(window.__playSlide)window.__playSlide(window.__currentSlideIndex||0);
+  };
+  document.body.classList.toggle('low-power',window.__lowPowerMode);
+})();
+</script>
+
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · T 自动 · B 静态 · ESC 索引</div>
+
+<div id="auto-bar">
+  <button id="auto-btn" onclick="toggleAuto()">▶ 自动</button>
+  <button onclick="setAutoInterval(12)" class="auto-opt">12s</button>
+  <button onclick="setAutoInterval(15)" class="auto-opt active">15s</button>
+  <button onclick="setAutoInterval(18)" class="auto-opt">18s</button>
+  <button onclick="setAutoInterval(24)" class="auto-opt">24s</button>
+</div>
+
+<div id="deck">
+<section class="slide dark hero dark">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>Geological Culture Park</div>
+<div class="h-hero" data-anim style="margin-bottom:3vh">校园地质文化园</div>
+<div class="h-sub" data-anim style="opacity:.5">科普导览 · Geological Science Tour</div>
+<div class="rule" style="width:120px;margin:4vh auto" data-anim></div>
+<div class="lead" data-anim style="opacity:.45">触摸远古的脉搏 · 聆听地球的独白</div>
+</div>
+<div class="ghost" style="top:50%;left:50%;transform:translate(-50%,-50%)">GEO</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1;max-width:70vw;margin:0 auto">
+<div class="kicker" data-anim>引言 · Introduction</div>
+<div class="h-xl" data-anim style="margin-bottom:4vh">大地之下的时光密码</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">在广袤的大地之下，蕴藏着亿万年的时光密码；在坚硬的岩石之间，镌刻着地球演化的壮丽篇章。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">地质文化园，正是这样一座以石头为语言、以时间为线索的露天博物馆。它将地球46亿年的漫长历史，浓缩在一方校园之中，让每一位走进这里的人，都能触摸到远古的脉搏。</div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>园区入口</div>
+<div class="frame-img r-16x9" data-anim style="max-width:75vw"><img src="images/16-entrance.jpg" alt=""></div>
+<div class="frame-cap" data-anim style="max-width:75vw;margin:0 auto"><span class="pf">地质文化园入口</span><span>台阶与题字</span></div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div class="split" style="flex:1">
+<div class="col" style="padding-right:2vw">
+<div class="kicker" data-anim>About the Park</div>
+<div class="h-xl" data-anim>园区简介</div>
+<div class="body-zh" data-anim style="margin-top:3vh">地质文化园是一座以石头为语言、以时间为线索的露天博物馆。它将地球46亿年的漫长历史，浓缩在一方校园之中。</div>
+</div>
+<div data-anim><figure class="tile"><div class="frame-img r-4x3"><img src="images/01-intro-board.jpg" alt=""></div><div class="frame-cap"><span class="pf">文化园</span><span>简介牌</span></div>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>Panorama</div>
+<div class="frame-img r-16x9" data-anim style="max-width:80vw"><img src="images/07-panorama.jpg" alt=""></div>
+<div class="frame-cap" data-anim style="max-width:80vw;margin:0 auto"><span class="pf">园区全景</span><span>树木、步道与远景</span></div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Geological Timeline</div>
+<div class="h-xl" data-anim style="margin-bottom:4vh">地球的编年史</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">地球的历史，是一部波澜壮阔的史诗。从46亿年前的混沌初开，到今天丰富多彩的生命世界，每一个时代都有属于自己的传奇。</div>
+<div class="body-serif" data-anim style="text-indent:2em">在校园的地质文化园中，这段历史被镌刻在浮雕墙上，凝固在岩石标本里，等待着每一位驻足者去品读。</div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>浮雕墙总览</div>
+<div class="frame-img r-16x9" data-anim style="max-width:78vw"><img src="images/05-timeline-overview.jpg" alt=""></div>
+<div class="frame-cap" data-anim style="max-width:78vw;margin:0 auto"><span class="pf">地质年代浮雕</span><span>从冥古宙到新生代</span></div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Hadean · Archean</div>
+<div class="h-xl" data-anim style="margin-bottom:1.5vh"><span class="hi">冥古宙</span> · 太古宙</div>
+<div class="h-sub" data-anim style="margin-bottom:3vh">46亿年前 → 25亿年前</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">地球的历史，是一部波澜壮阔的史诗。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">冥古宙，是地球的童年。那时的大地还是一片炽热的熔岩海洋，天空中弥漫着火山的浓烟，陨石如暴雨般倾泻而下。地球在混沌中诞生，在烈火中锻造了自己的骨骼。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">太古宙，生命的第一缕曙光终于穿透了黑暗。那些最原始的微生物，在深海热泉旁悄然萌发，用最卑微的方式，开启了生命伟大的征程。</div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Proterozoic</div>
+<div class="h-xl" data-anim style="margin-bottom:1.5vh"><span class="hi">元古宙</span></div>
+<div class="h-sub" data-anim style="margin-bottom:3vh">25亿年前 → 5.4亿年前</div>
+<div class="body-serif" data-anim style="text-indent:2em">元古宙，是蓝色的黎明。蓝藻开始在浅海中大量繁殖，它们吐出的氧气，一点一点地改变着大气的成分。大氧化事件，是地球历史上最深刻的化学革命——正是这场革命，为后来复杂生命的出现铺平了道路。</div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div class="split" style="flex:1">
+<div data-anim style="padding-right:2vw"><figure class="tile"><div class="frame-img r-4x3"><img src="images/06-proterozoic.jpg" alt=""></div><div class="frame-cap"><span class="pf">元古宙</span><span>浮雕</span></div>
+</figure>
+</div>
+<div class="col" style="justify-content:center">
+<div class="kicker" data-anim>浮雕细节</div>
+<div class="h2-zh" data-anim>元古宙 · 5.4亿年前</div>
+<div class="body-zh" data-anim style="margin-top:2vh">蓝藻的繁盛与大氧化事件，为生命大爆发奠定了基础。浮雕上的纹路，记录着那个蓝色星球的黎明。</div>
+</div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Early Paleozoic</div>
+<div class="h-xl" data-anim style="margin-bottom:1.5vh"><span class="hi">早古生代</span></div>
+<div class="h-sub" data-anim style="margin-bottom:3vh">5.4亿年前 → 3.6亿年前</div>
+<div class="body-serif" data-anim style="text-indent:2em">早古生代，生命迎来了寒武纪大爆发。三叶虫在海底巡游，奇虾是最早的顶级掠手，鹦鹉螺在海洋中称霸。生命以令人惊叹的速度分化出无数形态，仿佛大自然在进行一场疯狂的实验。</div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>Paleozoic Fossils</div>
+<div class="frame-img r-16x9" data-anim style="max-width:75vw"><img src="images/10-paleozoic-fossil.jpg" alt=""></div>
+<div class="frame-cap" data-anim style="max-width:75vw;margin:0 auto"><span class="pf">古生代化石浮雕</span><span>三叶虫 · 海洋生物</span></div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Late Paleozoic</div>
+<div class="h-xl" data-anim style="margin-bottom:1.5vh"><span class="hi">晚古生代</span></div>
+<div class="h-sub" data-anim style="margin-bottom:3vh">3.6亿年前 → 2.5亿年前</div>
+<div class="body-serif" data-anim style="text-indent:2em">晚古生代，生命开始向陆地进军。蕨类植物编织出茂密的森林，两栖动物在沼泽中艰难地迈出走向陆地的第一步。石炭纪的巨型昆虫——两米长的蜈蚣、老鹰大小的蜻蜓——是那个高氧时代的奇特产物。</div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Mesozoic</div>
+<div class="h-xl" data-anim style="margin-bottom:1.5vh"><span class="hi">中生代</span></div>
+<div class="h-sub" data-anim style="margin-bottom:3vh">2.5亿年前 → 6500万年前</div>
+<div class="body-serif" data-anim style="text-indent:2em">中生代，是爬行动物的黄金时代。恐龙统治了地球长达1.6亿年，从迅猛的掠食者到温和的巨兽，它们的身影遍布每一片大陆。而始祖鸟的出现，预示着一个新纪元的来临——天空即将属于鸟类。</div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div class="split-55" style="flex:1">
+<div class="col" style="justify-content:center;padding-right:2vw">
+<div class="kicker" data-anim>浮雕细节</div>
+<div class="h2-zh" data-anim>中生代 · 6500万年前</div>
+<div class="body-zh" data-anim style="margin-top:2vh">恐龙的统治在白垩纪末期戛然而止。浮雕上的孔子鸟与银杏叶，诉说着那个古老世界的最后辉煌。</div>
+</div>
+<div data-anim><figure class="tile"><div class="frame-img r-4x3"><img src="images/12-mesozoic.jpg" alt=""></div><div class="frame-cap"><span class="pf">中生代</span><span>浮雕</span></div>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Cenozoic</div>
+<div class="h-xl" data-anim style="margin-bottom:1.5vh"><span class="hi">新生代</span></div>
+<div class="h-sub" data-anim style="margin-bottom:3vh">6500万年前 → 至今</div>
+<div class="body-serif" data-anim style="text-indent:2em">新生代，是哺乳动物崛起的时代。在恐龙灭绝后的废墟上，小型哺乳动物迅速分化，最终演化出今天丰富多彩的生命世界。人类，不过是这部宏大叙事中最新的一章。</div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>Cenozoic Relief</div>
+<div class="frame-img r-16x9" data-anim style="max-width:75vw"><img src="images/13-cenozoic.jpg" alt=""></div>
+<div class="frame-cap" data-anim style="max-width:75vw;margin:0 auto"><span class="pf">新生代浮雕</span><span>世界地图 · 植物化石</span></div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>Ground Map</div>
+<div class="h2-zh" data-anim style="margin-bottom:3vh">大地上的地图</div>
+<div class="frame-img r-16x9" data-anim style="max-width:70vw"><img src="images/09-ground-map.jpg" alt=""></div>
+<div class="frame-cap" data-anim style="max-width:70vw;margin:0 auto"><span class="pf">地面彩绘地图</span><span>大陆板块的变迁</span></div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+<div class="kicker" data-anim>Relief Collection</div>
+<div class="h-md" data-anim style="margin-bottom:3vh">浮雕掠影</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:2vw">
+<div data-anim><figure class="tile"><div class="frame-img r-3x2"><img src="images/08-fossil-relief.jpg" alt=""></div><div class="frame-cap"><span class="pf"></span><span>化石浮雕</span></div>
+</figure>
+</div>
+<div data-anim><figure class="tile"><div class="frame-img r-3x2"><img src="images/10-paleozoic-fossil.jpg" alt=""></div><div class="frame-cap"><span class="pf"></span><span>古生代</span></div>
+</figure>
+</div>
+<div data-anim><figure class="tile"><div class="frame-img r-3x2"><img src="images/12-mesozoic.jpg" alt=""></div><div class="frame-cap"><span class="pf"></span><span>中生代</span></div>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Three Rock Types</div>
+<div class="h-xl" data-anim style="margin-bottom:3vh">三大岩类</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">园区中陈列的岩石标本，诉说着三大岩类的故事。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">火成岩，来自地球深处的炽热熔浆。无论是喷出地表的玄武岩，还是在地下缓缓冷却的花岗岩，都记录着地球内部的能量与激情。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">沉积岩，是时间的书页。一层层沉积物叠加压实，封存了远古的气候、海洋和生命。砂岩的粗糙、页岩的细腻、石灰岩中隐藏的化石，都是大自然最忠实的记录。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">变质岩，则是大地的炼金术。在高温高压的极端条件下，原有的岩石被重塑，焕发出全新的面貌。大理岩的温润、片麻岩的纹理，都是地球深处力量的见证。</div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div class="split" style="flex:1">
+<div data-anim style="padding-right:2vw"><figure class="tile"><div class="frame-img r-4x3"><img src="images/02-rock-display.jpg" alt=""></div><div class="frame-cap"><span class="pf">岩石标本</span><span>展示台</span></div>
+</figure>
+</div>
+<div class="col" style="justify-content:center">
+<div class="kicker" data-anim>Specimen Display</div>
+<div class="h2-zh" data-anim>岩石标本展示</div>
+<div class="body-zh" data-anim style="margin-top:2vh">园区陈列的岩石标本，涵盖了火成岩、沉积岩和变质岩三大类。每一块石头都是地球故事的一页。</div>
+</div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Fossils</div>
+<div class="h-xl" data-anim style="margin-bottom:3vh">穿越时空的信使</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">化石，是穿越时空的信使。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">在园区的浮雕墙上，三叶虫、鹦鹉螺、蕨类植物的轮廓清晰可辨。它们曾经是各自时代的主人，如今化为石头中的剪影，向我们诉说着亿万年前的故事。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">每一枚化石都是一部微缩的编年史。布朗克菊石——这种来自侏罗纪的海洋生物，其精密的螺旋结构至今仍令古生物学家着迷。从化石中，我们不仅能重建远古的生态面貌，更能理解生命演化的内在逻辑。</div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>Brancoceras</div>
+<div class="frame-img r-4x3" data-anim style="max-width:60vw"><img src="images/14-ammonite.jpg" alt=""></div>
+<div class="frame-cap" data-anim style="max-width:60vw;margin:0 auto"><span class="pf">布朗克菊石</span><span>侏罗纪 · 加拿大</span></div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>Fossil Specimen</div>
+<div class="frame-img r-16x9 fit-contain" data-anim style="max-width:70vw"><img src="images/15-large-fossil.jpg" alt=""></div>
+<div class="frame-cap" data-anim style="max-width:70vw;margin:0 auto"><span class="pf">大型化石标本</span><span>岩石中的远古生命</span></div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+<div class="kicker" data-anim>Fossil Gallery</div>
+<div class="h-md" data-anim style="margin-bottom:3vh">化石集锦</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:3vw">
+<div data-anim><figure class="tile"><div class="frame-img r-4x3"><img src="images/08-fossil-relief.jpg" alt=""></div><div class="frame-cap"><span class="pf"></span><span>化石浮雕</span></div>
+</figure>
+</div>
+<div data-anim><figure class="tile"><div class="frame-img r-4x3"><img src="images/14-ammonite.jpg" alt=""></div><div class="frame-cap"><span class="pf"></span><span>菊石化石</span></div>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Li Siguang</div>
+<div class="h-xl" data-anim style="margin-bottom:3vh"><span class="hi">李四光</span></div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">李四光，中国地质学的奠基人。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">他创立了地质力学，为中国石油工业的崛起奠定了理论基础。在他的指引下，中国摘掉了"贫油国"的帽子。他不仅是一位伟大的科学家，更是一位将毕生心血献给祖国地质事业的爱国者。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">园区中矗立的李四光雕像，目光深邃而坚定，仿佛仍在凝视着这片他深爱的土地。</div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div class="split" style="flex:1">
+<div class="col" style="justify-content:center;padding-right:2vw">
+<div class="kicker" data-anim>Statue</div>
+<div class="h2-zh" data-anim>李四光雕像</div>
+<div class="body-zh" data-anim style="margin-top:2vh">园区中矗立的李四光雕像，目光深邃而坚定，仿佛仍在凝视着这片他深爱的土地。</div>
+</div>
+<div data-anim><figure class="tile"><div class="frame-img r-3x4"><img src="images/03-li-siguang.jpg" alt=""></div><div class="frame-cap"><span class="pf">李四光</span><span>雕像</span></div>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section class="slide dark dark">
+<div class="frame" style="position:relative;z-index:2">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;max-width:72vw;margin:0 auto">
+<div class="kicker" data-anim>Craftsmanship</div>
+<div class="h-xl" data-anim style="margin-bottom:3vh">匠心筑石</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">地质文化园的每一块石头、每一幅浮雕，都凝聚着建设者的心血与匠心。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">从选址到设计，从雕刻到布展，每一个细节都经过反复推敲。他们用双手将冰冷的岩石赋予温度，用匠心将枯燥的科学转化为生动的语言。</div>
+<div class="body-serif" data-anim style="margin-bottom:2vh;text-indent:2em">这不仅是一座科普教育基地，更是一份对自然的敬意、对科学的礼赞。</div>
+</div>
+</div>
+</section>
+<section class="slide light light">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>Inscription</div>
+<div class="frame-img r-4x3" data-anim style="max-width:60vw"><img src="images/04-inscription.jpg" alt=""></div>
+<div class="frame-cap" data-anim style="max-width:60vw;margin:0 auto"><span class="pf">石碑铭文</span><span>镌刻的记忆</span></div>
+</div>
+</div>
+</section>
+<section class="slide dark hero dark">
+<div class="frame" style="position:relative;z-index:2">
+<div class="center" style="flex:1">
+<div class="kicker" data-anim>Closing</div>
+<div class="h-xl" data-anim style="margin-bottom:4vh;line-height:1.4;max-width:60vw;margin-left:auto;margin-right:auto">在认识自然的过程中学会敬畏</div>
+<div class="rule" style="width:120px;margin:0 auto 4vh" data-anim></div>
+<div class="lead" data-anim style="opacity:.6">在浩瀚的宇宙和漫长的历史中<br>去寻找人类的位置</div>
+<div class="lead" data-anim style="opacity:.35;margin-top:5vh;font-size:1.3vw">校园地质文化园 · 科普导览</div>
+</div>
+<div class="ghost" style="top:50%;left:50%;transform:translate(-50%,-50%)">GEO</div>
+</div>
+</section>
+
+</div>
+
+<div id="nav"></div>
+
+<script>
+const VS=`attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+const FS_DARK=`precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;float md=length(p-m);
+  float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;vec2 p0=p;
+  for(float i=1.0;i<4.0;i++){p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;}
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 a=vec3(0.12,0.12,0.13);vec3 b=vec3(0.03,0.04,0.05);vec3 c=vec3(1.0,1.0,1.0);vec3 d=vec3(0.1,0.2,0.4);
+  vec3 col=palette(r*1.5+p0.x*0.5+u_time*0.1,a,b,c,d);
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  float hi=pow(sin(p.x*4.0+p.y*3.0+u_time)*0.5+0.5,8.0);col+=hi*0.08;
+  vec3 base=vec3(0.05,0.05,0.06);col=mix(base,col,0.85);gl_FragColor=vec4(col,1.0);}`;
+const FS_LIGHT=`precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));vec2 u=f*f*(3.0-2.0*f);return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;}
+float fbm(vec2 p){float v=0.0,a=0.5;mat2 m=mat2(0.80,0.60,-0.60,0.80);for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}return v;}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse;m.x*=u_resolution.x/u_resolution.y;vec2 md=p-m;float dl=length(md);
+  p+=normalize(md+vec2(0.0001))*exp(-dl*5.0)*0.03;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);vec3 silverDark=vec3(0.86,0.85,0.84);vec3 paper=vec3(0.955,0.945,0.925);
+  vec3 col=mix(silverDark,paper,f);float ph=r.x*2.2+u_time*0.35;
+  col+=vec3(0.78,0.62,0.92)*sin(ph)*0.055;col+=vec3(0.55,0.72,0.95)*sin(ph*0.8+2.0)*0.05;
+  float hl=smoothstep(0.48,0.92,f);col+=hl*0.06;gl_FragColor=vec4(col,1.0);}`;
+const mouse={x:.5,y:.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+function bootGL(id,fs){
+  const c=document.getElementById(id),gl=c.getContext('webgl',{alpha:false,antialias:true});if(!gl)return()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const pg=gl.createProgram();gl.attachShader(pg,mk(gl.VERTEX_SHADER,VS));gl.attachShader(pg,mk(gl.FRAGMENT_SHADER,fs));
+  gl.linkProgram(pg);gl.useProgram(pg);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const p=gl.getAttribLocation(pg,'position');gl.enableVertexAttribArray(p);gl.vertexAttribPointer(p,2,gl.FLOAT,false,0,0);
+  const lR=gl.getUniformLocation(pg,'u_resolution'),lT=gl.getUniformLocation(pg,'u_time'),lM=gl.getUniformLocation(pg,'u_mouse');
+  const rs=()=>{const d=Math.min(devicePixelRatio||1,2);c.width=innerWidth*d;c.height=innerHeight*d;gl.viewport(0,0,c.width,c.height)};
+  addEventListener('resize',rs);rs();
+  return t=>{gl.uniform2f(lR,c.width,c.height);gl.uniform1f(lT,t);gl.uniform2f(lM,mouse.x,1-mouse.y);gl.drawArrays(gl.TRIANGLES,0,6);return true};
+}
+let drawDark=null,drawLight=null,glRAF=0,glT0=Date.now();
+function startGL(){if(window.__lowPowerMode||glRAF)return;if(!drawDark)drawDark=bootGL('bg-dark',FS_DARK);if(!drawLight)drawLight=bootGL('bg-light',FS_LIGHT);glT0=Date.now();(function lp(){if(window.__lowPowerMode){glRAF=0;return}const t=(Date.now()-glT0)/1000;drawDark(t);drawLight(t);glRAF=requestAnimationFrame(lp)})()}
+function stopGL(){if(glRAF)cancelAnimationFrame(glRAF);glRAF=0}
+startGL();
+addEventListener('ppt-low-power-change',e=>{e.detail.on?stopGL():startGL()});
+
+const deck=document.getElementById('deck');
+const slides=deck.querySelectorAll('.slide');
+const nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+deck.style.width=(total*100)+'vw';
+slides.forEach((s,i)=>{const b=document.createElement('button');b.className='dot';b.dataset.i=i;b.setAttribute('aria-label','Page '+(i+1));b.onclick=()=>go(i);nav.appendChild(b)});
+
+function go(n){
+  if(lock)return;idx=Math.max(0,Math.min(total-1,n));window.__currentSlideIndex=idx;
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  const el=slides[idx];const th=el.dataset.theme||(el.classList.contains('light')?'light':'dark');
+  document.body.classList.toggle('light-bg',th==='light');
+  if(window.__playSlide)setTimeout(()=>window.__playSlide(idx),450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+
+let overviewOn=false;
+const ov=document.createElement('div');ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+function buildOverview(){
+  ov.innerHTML='';const g=document.createElement('div');
+  g.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+  slides.forEach((s,i)=>{const c=document.createElement('div');
+    c.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)')+';transition:border-color .2s';
+    c.onmouseenter=()=>c.style.borderColor='rgba(var(--paper-rgb),.6)';
+    c.onmouseleave=()=>c.style.borderColor=i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)';
+    const w=document.createElement('div');w.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+    const cl=s.cloneNode(true);cl.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+    w.appendChild(cl);const l=document.createElement('div');l.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--paper);opacity:.7';
+    l.textContent=(i+1)+' / '+total;c.appendChild(w);c.appendChild(l);c.onclick=()=>{toggleOverview();go(i)};g.appendChild(c)});
+  ov.appendChild(g);
+}
+function toggleOverview(){overviewOn=!overviewOn;if(overviewOn){buildOverview();ov.style.display='block'}else ov.style.display='none'}
+
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return}
+  if(e.key==='t'||e.key==='T'){e.preventDefault();toggleAuto();return}
+  if(e.key.toLowerCase()==='b'&&!e.metaKey&&!e.ctrlKey&&!e.altKey){e.preventDefault();window.__setLowPowerMode(!window.__lowPowerMode);return}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '||e.key==='ArrowDown'){if(e.key===' ')e.preventDefault();go(idx+1);return}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);if(e.key==='End')go(total-1)});
+
+let wheelTO=null,wheelAcc=0;
+addEventListener('wheel',e=>{wheelAcc+=e.deltaY+e.deltaX;if(Math.abs(wheelAcc)>50){go(idx+(wheelAcc>0?1:-1));wheelAcc=0}clearTimeout(wheelTO);wheelTO=setTimeout(()=>wheelAcc=0,150)},{passive:true});
+
+let tx=0,ty=0;
+addEventListener('touchstart',e=>{tx=e.touches[0].clientX;ty=e.touches[0].clientY},{passive:true});
+addEventListener('touchend',e=>{const dx=(e.changedTouches[0].clientX-tx),dy=(e.changedTouches[0].clientY-ty);if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))go(idx+(dx<0?1:-1))},{passive:true});
+
+go(0);
+</script>
+
+<script>
+let autoTimer=null,autoInterval=15000;
+const autoBtn=document.getElementById('auto-btn');
+function toggleAuto(){
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;updateAutoBtn()}
+  else{autoTimer=setInterval(()=>{if(idx<total-1)go(idx+1);else{clearInterval(autoTimer);autoTimer=null}},autoInterval);updateAutoBtn()}
+}
+function setAutoInterval(sec){
+  autoInterval=sec*1000;
+  document.querySelectorAll('.auto-opt').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  if(autoTimer){clearInterval(autoTimer);autoTimer=setInterval(()=>{if(idx<total-1)go(idx+1);else{clearInterval(autoTimer);autoTimer=null}},autoInterval)}
+}
+function updateAutoBtn(){autoBtn.textContent=autoTimer?'■ 停止':'▶ 自动';autoBtn.classList.toggle('active',!!autoTimer)}
+</script>
+
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>lucide.createIcons();</script>
+
+<script type="module">
+let motion;
+try{motion=await import('./assets/motion.min.js')}catch(e1){try{motion=await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm')}catch(e2){console.warn('[motion] disabled');document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'})}}}
+if(motion){
+  const{animate,stagger}=motion;document.body.classList.add('motion-ready');
+  const EASE=[.22,1,.36,1];const slides=[...document.querySelectorAll('.slide')];let lastIdx=-1;
+  function resetAnims(s){s.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='';el.style.transform=''})}
+  function revealStatic(s){resetAnims(s);document.getAnimations?.().forEach(a=>a.cancel());s.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'})}
+  function playSlide(i){
+    const slide=slides[i];if(!slide)return;lastIdx=i;
+    const recipe=slide.dataset.animate||(slide.classList.contains('hero')?'hero':'cascade');
+    if(window.__lowPowerMode){revealStatic(slide);return}
+    resetAnims(slide);const all=[...slide.querySelectorAll('[data-anim]')];if(!all.length)return;
+    if(recipe==='hero'){animate(all,{opacity:[0,1],y:[14,0]},{duration:1.8,delay:stagger(.5,{start:.5}),easing:EASE});return}
+    animate(all,{opacity:[0,1],y:[16,0]},{duration:1.4,delay:stagger(.35,{start:.4}),easing:EASE});
+  }
+  window.__playSlide=playSlide;playSlide(0);
+}
+</script>
+</body>
+</html>
